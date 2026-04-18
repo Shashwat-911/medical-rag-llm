@@ -35,7 +35,7 @@ vectordb = Chroma(
 retriever = vectordb.as_retriever(search_kwargs={"k": 3})
 
 # --- 3. SET UP THE LLM (GROQ) ---
-os.environ["GROQ_API_KEY"] = "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" 
+os.environ["GROQ_API_KEY"] = "API KEY FROM GROQ" 
 
 llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.1)
 
