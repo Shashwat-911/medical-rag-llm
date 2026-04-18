@@ -64,10 +64,3 @@ Developed by: Shashwat Yadav
 Academic Context: VTU 5th Semester Engineering Internship Project
 
 
-### Why this works:
-* **Headings:** The `#` and `##` symbols tell GitHub to make the text large and bold.
-* **Lists:** The `*` symbols create clean bullet points.
-* **Code Blocks:** The ` ```bash ` markers create those nice dark boxes for your commands.
-* **Bolding:** The `**` symbols highlight key technical terms like **ChromaDB**.
-
-Once you save this, your GitHub page will look like a professional documentation s
