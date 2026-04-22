@@ -63,6 +63,9 @@ Ensure your project directory is set up as follows:
 ├── new\_rag\_terminal.py     \# Terminal interface to chat with the AI  
 └── README.md
 
+### **4\. Install libraries**
+pip install -r requirements.txt
+
 ## **🚀 Usage**
 
 ### **Phase 1: Build the Knowledge Base**
