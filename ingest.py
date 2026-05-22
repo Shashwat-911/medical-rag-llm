@@ -25,22 +25,36 @@ CHUNK_OVERLAP   = 150
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ── 1. Data Cleaning & Normalization Layer ──────────────────────────────────
+# Replace the clean_text function in your updated_ingest.py with this hardened version:
+
 def clean_text(text: str) -> str:
-    """Applies cleaning operations to eliminate structural noise before vectorization."""
+    """Advanced clinical text cleaning layer to purge PDF parsing artifacts,
+    broken ligatures, and structural noise before vectorization."""
     if not text:
         return ""
     
-    # Remove surrogate characters or bad byte sequences that break tokenizers
+    # 1. Byte-level normalization
     text = text.encode("utf-8", "ignore").decode("utf-8")
-    
-    # Standardize varying newline formats and carriage returns
     text = text.replace("\r\n", "\n").replace("\r", "\n")
     
-    # Strip bullet-point/formatting artifacts and repeated noisy punctuation
-    text = re.sub(r'─{2,}', '', text)  # Removes decorative divider lines
-    text = re.sub(r'_{2,}', '', text)  # Removes repeated underscores
+    # 2. Purge common PDF encoding/ligature artifacts (e.g., A5%, PC5, random isolated characters)
+    # Fixes specific symbols mashing into letters next to percentages/numbers
+    text = re.compile(r'\b[A-Z][0-9]+%').sub('', text) 
     
-    # Consolidate excessive spaces and multi-newlines without destroying paragraph boundaries
+    # 3. Standardize medical symbols and units (e.g., converting broken degree artifacts)
+    text = re.compile(r'(?<=\d)\s*0\s*F\b').sub('°F', text)
+    text = re.compile(r'(?<=\d)\s*0\s*C\b').sub('°C', text)
+    text = text.replace("°F", "°F").replace("°C", "°C")
+    
+    # 4. Remove structural layout lines, hyphens, and decorative noise
+    text = re.sub(r'─{2,}', '', text)
+    text = re.sub(r'_{2,}', '', text)
+    text = re.sub(r'\*+', '', text) # Strip leftover erratic markdown stars from raw loaders
+    
+    # 5. Fix hyphenated word breaks split across lines due to PDF margins
+    text = re.sub(r'(\w+)-\n(\w+)', r'\1\2', text)
+    
+    # 6. Consolidate whitespace while respecting distinct paragraph markers
     text = re.sub(r'[ \t]+', ' ', text)
     text = re.sub(r'\n{3,}', '\n\n', text)
     
