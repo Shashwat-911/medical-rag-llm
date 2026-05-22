@@ -21,8 +21,8 @@ embeddings = HuggingFaceEmbeddings(
 )
 
 # --- 2. LOAD CHROMA DATABASE ---
-# Updated to match exactly where your ingest.py saved the database
-CHROMA_DIR = "./my_chroma_db" 
+# Updated path to point explicitly to the absolute path used in your ingest script
+CHROMA_DIR = r"C:\Users\Shashwat\Desktop\internship\RAG\my_chroma_db" 
 
 if not os.path.exists(CHROMA_DIR):
     print(f"❌ Error: Folder '{CHROMA_DIR}' not found. Did you run your ingest script?")
@@ -37,18 +37,25 @@ vectordb = Chroma(
 retriever = vectordb.as_retriever(
     search_type="mmr", 
     search_kwargs={"k": 8, "fetch_k": 20}
-) # Retrieves top 10 chunks
+) 
 
 # --- 3. SET UP LOCAL LLM (OLLAMA) ---
 print("🧠 Connecting to local Ollama model (Llama 3)...")
+# Set a slightly higher context control or standard parameters for analytical processing
 llm = ChatOllama(model="llama3", temperature=0)
 
-# --- 4. CREATE THE RAG CHAIN ---
+# --- 4. CREATE THE ADVANCED STRUCTURAL RAG CHAIN ---
+# This prompt forces Llama 3 to split multi-part user inputs and answer them individually
 system_prompt = (
-    "You are a helpful medical assistant. "
-    "Use the following pieces of retrieved context to answer the question. "
-    "If you don't know the answer, just say that you don't know. "
-    "Do not make up information. Keep the answer concise.\n\n"
+    "You are an expert, highly reliable medical assistant tasked with processing complex queries.\n"
+    "The user may ask multiple distinct questions within a single query. You must address ALL of them.\n\n"
+    "INSTRUCTIONS:\n"
+    "1. Deconstruct the user's input into its individual sub-questions.\n"
+    "2. Evaluate the provided context to answer each sub-question independently, accurately, and objectively.\n"
+    "3. Structure your final response using clear bullet points or numbered sub-headings corresponding to each detected question.\n"
+    "4. Synthesize your findings into a clear, reliable, and consolidated medical summary.\n"
+    "5. Rely STRICTLY on the retrieved context below. If a specific sub-question cannot be answered using the context, state: "
+    "'[Information not available in local data source]' for that specific part instead of making things up.\n\n"
     "Context:\n{context}"
 )
 
@@ -62,7 +69,7 @@ rag_chain = create_retrieval_chain(retriever, combine_docs_chain)
 
 # --- 5. TERMINAL INTERFACE ---
 print("\n" + "="*55)
-print("🚀 100% LOCAL RAG SYSTEM READY (Ollama / Llama 3)")
+print("🚀 ADVANCED MULTI-QUESTION LOCAL RAG SYSTEM READY")
 print("Type 'exit' or 'quit' to close the program.")
 print("="*55 + "\n")
 
@@ -76,11 +83,11 @@ while True:
     if not user_query.strip():
         continue
 
-    print("🔎 Searching local database and generating answer...")
+    print("🔎 Analyzing query, searching local database, and processing answers...")
     
     try:
         response = rag_chain.invoke({"input": user_query})
-        print(f"\n🤖 Assistant: {response['answer']}")
+        print(f"\n🤖 Assistant:\n{response['answer']}")
         
         # Print the filenames it used to answer
         print("\n📚 Sources:")
