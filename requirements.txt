@@ -1,10 +1,18 @@
-langchain==0.1.16
-langchain-core==0.1.45
-langchain-community==0.0.34
-langchain-text-splitters==0.0.1
-langchain-chroma==0.1.0
-langchain-huggingface==0.0.1
-langchain-classic==0.0.1
-chromadb==0.4.24
-sentence-transformers==2.7.0
-pypdf==4.2.0
+# --- Base Framework ---
+langchain>=0.3.0
+langchain-core>=0.3.0
+langchain-community>=0.3.0
+
+# --- Vector Store & Embeddings ---
+langchain-chroma>=0.1.4
+langchain-huggingface>=0.1.0
+chromadb>=0.5.0
+sentence-transformers>=3.0.0
+torch>=2.2.0 --extra-index-url https://download.pytorch.org/whl/cpu
+
+# --- Document Parsers ---
+pypdf>=4.0.0
+
+# --- Helper Utilities ---
+huggingface-hub>=0.20.0
+requests>=2.31.0
