@@ -1,5 +1,5 @@
 import os
-# Suppress unnecessary logging
+import re
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="langchain_core._api")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -7,10 +7,8 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_community.chat_models import ChatOllama
-# --- UPDATED IMPORTS FOR LANGCHAIN V1 ---
-from langchain_classic.chains.combine_documents import create_stuff_documents_chain
-from langchain_classic.chains import create_retrieval_chain
+from langchain_ollama import ChatOllama
+from langchain_core.documents import Document
 
 # --- 1. SET UP EMBEDDINGS ---
 print("🔄 Loading embedding model: sentence-transformers/all-MiniLM-L6-v2...")
@@ -21,7 +19,6 @@ embeddings = HuggingFaceEmbeddings(
 )
 
 # --- 2. LOAD CHROMA DATABASE ---
-# Updated path to point explicitly to the absolute path used in your ingest script
 CHROMA_DIR = r"C:\Users\Shashwat\Desktop\internship\RAG\my_chroma_db" 
 
 if not os.path.exists(CHROMA_DIR):
@@ -29,34 +26,21 @@ if not os.path.exists(CHROMA_DIR):
     exit()
 
 print(f"📂 Accessing vector database at '{CHROMA_DIR}'...")
-vectordb = Chroma(
-    persist_directory=CHROMA_DIR, 
-    embedding_function=embeddings
-)
+vectordb = Chroma(persist_directory=CHROMA_DIR, embedding_function=embeddings)
+retriever = vectordb.as_retriever(search_type="mmr", search_kwargs={"k": 4, "fetch_k": 10}) 
 
-retriever = vectordb.as_retriever(
-    search_type="mmr", 
-    search_kwargs={"k": 8, "fetch_k": 20}
-) 
-
-# --- 3. SET UP LOCAL LLM (OLLAMA) ---
+# --- 3. SET UP LOCAL LLM ---
 print("🧠 Connecting to local Ollama model (Llama 3)...")
-# Set a slightly higher context control or standard parameters for analytical processing
 llm = ChatOllama(model="llama3", temperature=0)
 
-# --- 4. CREATE THE ADVANCED STRUCTURAL RAG CHAIN ---
-# This prompt forces Llama 3 to split multi-part user inputs and answer them individually
+# --- 4. CONSTRUCT THE SYNTHESIS PROMPT ---
 system_prompt = (
-    "You are an expert, highly reliable medical assistant tasked with processing complex queries.\n"
-    "The user may ask multiple distinct questions within a single query. You must address ALL of them.\n\n"
-    "INSTRUCTIONS:\n"
-    "1. Deconstruct the user's input into its individual sub-questions.\n"
-    "2. Evaluate the provided context to answer each sub-question independently, accurately, and objectively.\n"
-    "3. Structure your final response using clear bullet points or numbered sub-headings corresponding to each detected question.\n"
-    "4. Synthesize your findings into a clear, reliable, and consolidated medical summary.\n"
-    "5. Rely STRICTLY on the retrieved context below. If a specific sub-question cannot be answered using the context, state: "
-    "'[Information not available in local data source]' for that specific part instead of making things up.\n\n"
-    "Context:\n{context}"
+    "You are a precise clinical assistant answering a specific medical question using ONLY the provided text snippets.\n"
+    "You have no outside medical knowledge. Do not use pre-trained background guidelines under any circumstances.\n\n"
+    "STRICT PROTOCOLS:\n"
+    "1. CLINICAL CONCISION: Provide a maximum of 2 short bullet points. Prioritize hard numbers, dosages, thresholds, and data over explanations.\n"
+    "2. SCOPE-AWARE REFUSAL: If the provided text blocks do not contain the answer, explicitly state that the specific information requested is not present in the local database.\n\n"
+    "Retrieved Context Snippets:\n{context}"
 )
 
 prompt = ChatPromptTemplate.from_messages([
@@ -64,12 +48,21 @@ prompt = ChatPromptTemplate.from_messages([
     ("human", "{input}"),
 ])
 
-combine_docs_chain = create_stuff_documents_chain(llm, prompt)
-rag_chain = create_retrieval_chain(retriever, combine_docs_chain)
+# Using native LangChain Expression Language (LCEL) for maximum control
+synthesis_chain = prompt | llm
+
+def deconstruct_query(query: str) -> list[str]:
+    """Splits a complex multi-part query into individual questions using punctuation markers."""
+    # Split on question marks or distinct sentence boundaries that look like questions
+    sub_queries = [q.strip() + "?" for q in query.split("?") if q.strip()]
+    if len(sub_queries) == 1 and "," in query:
+        # Fallback split if they used commas instead of question marks
+        sub_queries = [q.strip() for q in query.split(",") if q.strip()]
+    return sub_queries
 
 # --- 5. TERMINAL INTERFACE ---
 print("\n" + "="*55)
-print("🚀 ADVANCED MULTI-QUESTION LOCAL RAG SYSTEM READY")
+print("🚀 MULTI-ROUTE SUB-QUERY RAG SYSTEM READY")
 print("Type 'exit' or 'quit' to close the program.")
 print("="*55 + "\n")
 
@@ -83,17 +76,34 @@ while True:
     if not user_query.strip():
         continue
 
-    print("🔎 Analyzing query, searching local database, and processing answers...")
+    print("🔎 Planning query execution routes and generating sequential answers...")
     
-    try:
-        response = rag_chain.invoke({"input": user_query})
-        print(f"\n🤖 Assistant:\n{response['answer']}")
+    # Step A: Deconstruct the multi-part prompt
+    sub_questions = deconstruct_query(user_query)
+    all_sources = set()
+    final_output = []
+
+    # Step B: Run independent Retrieval and Generation for each sub-question
+    for idx, sub_q in enumerate(sub_questions, start=1):
+        print(f"  [Route {idx}/{len(sub_questions)}] Retrieving for: '{sub_q[:40]}...'")
         
-        # Print the filenames it used to answer
-        print("\n📚 Sources:")
-        sources = set([doc.metadata.get('source', 'Unknown') for doc in response.get("context", [])])
-        for source in sources:
-            print(f"- {source}")
+        # Pull diverse chunks specific to THIS sub-question only
+        retrieved_docs = retriever.get_relevant_documents(sub_q)
+        context_str = "\n\n".join([doc.page_content for doc in retrieved_docs])
+        
+        # Track sources used across sub-queries
+        for doc in retrieved_docs:
+            all_sources.add(doc.metadata.get('source', 'Unknown'))
             
-    except Exception as e:
-        print(f"❌ Error: {e}\n(Make sure the Ollama app is currently running on your computer!)")
+        # Run local generation for this specific part
+        response = synthesis_chain.invoke({"context": context_str, "input": sub_q})
+        
+        # Format the combined output beautifully
+        final_output.append(f"**Question: {sub_q}**\n{response.content.strip()}")
+
+    # Step C: Print consolidated scannable response
+    print("\n🤖 Assistant:\n" + "\n\n".join(final_output))
+    
+    print("\n📚 Sources:")
+    for source in all_sources:
+        print(f"- {source}")
