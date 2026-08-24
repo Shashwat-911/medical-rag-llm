@@ -4,8 +4,10 @@
 [![LangChain](https://img.shields.io/badge/LangChain-v0.2%2B-000000.svg?style=for-the-badge&logo=chainlink&logoColor=white)](https://www.langchain.com/)
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector_Store-orange.svg?style=for-the-badge)](https://www.trychroma.com/)
 [![Ollama](https://img.shields.io/badge/Ollama-Local_Inference-black.svg?style=for-the-badge&logo=ollama&logoColor=white)](https://ollama.ai/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-App_Interface-FF4B4B.svg?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://medical-rag-llm.streamlit.app/)
 [![RAGAS](https://img.shields.io/badge/RAGAS-Evaluation_Suite-blueviolet.svg?style=for-the-badge)](https://github.com/explodinggradients/ragas)
+
+> **🌐 Live Demo / Public Access:** [https://medical-rag-llm.streamlit.app/](https://medical-rag-llm.streamlit.app/)
 
 An **enterprise-grade, privacy-first, 100% local Retrieval-Augmented Generation (RAG) system** engineered for emergency clinical triage, first-aid guidance, and medical literature query answering. Powered entirely on local hardware with zero external API calls or data leakage.
 
