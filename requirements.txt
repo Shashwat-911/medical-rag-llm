@@ -1,23 +1,14 @@
-# --- Base Framework ---
-langchain>=0.3.0
-langchain-core>=0.3.0
-langchain-community>=0.3.0
-
-# --- LLM Provider & Execution Engine ---
-langchain-ollama>=0.2.0
-
-# --- Vector Store & Embeddings ---
-langchain-chroma>=0.1.4
-langchain-huggingface>=0.1.0
-chromadb>=0.5.4
-sentence-transformers>=3.0.1
-torch>=2.2.0 --extra-index-url https://download.pytorch.org/whl/cpu
-
-# --- RAG Evaluation Suite (Local Automated Testing) ---
-ragas>=0.2.0
-datasets>=2.18.0
-
-# --- Document Parsers & Helper Utilities ---
-pypdf>=4.0.0
-huggingface-hub>=0.20.0
-requests>=2.31.0
+streamlit>=1.30.0
+langchain>=0.2.0
+langchain-core>=0.2.0
+langchain-community>=0.2.0
+langchain-classic
+langchain-chroma>=0.1.0
+langchain-huggingface>=0.0.1
+langchain-ollama>=0.1.0
+sentence-transformers>=2.2.0
+chromadb>=0.4.22
+pypdf>=3.17.0
+ragas>=0.1.0
+datasets>=2.14.0
+torch
