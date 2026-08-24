@@ -105,7 +105,21 @@ python ingest.py
 python -m streamlit run app.py
 ```
 - Open `http://localhost:8501` in your browser.
-- Select your active Ollama model, customize top-$k$ retrieval chunks, and explore emergency query presets.
+- Select your active inference provider (Local Ollama, Groq, or Google Gemini), customize top-$k$ retrieval chunks, and explore emergency query presets.
+
+### 🌐 Deploying to Streamlit Cloud
+
+To run on [Streamlit Community Cloud](https://medical-rag-llm.streamlit.app/):
+1. In your Streamlit Cloud app dashboard, navigate to **Settings > Secrets**.
+2. Add your free API key for cloud inference:
+   ```toml
+   GROQ_API_KEY = "gsk_..."
+   # or
+   GOOGLE_API_KEY = "AIza..."
+   # (Optional) Remote Chroma Vector Store Archive URL
+   # CHROMA_DB_ZIP_URL = "https://your-storage-bucket/chromadb.zip"
+   ```
+3. The web app will automatically detect your cloud secrets and use ultra-fast cloud inference with full RAG context.
 
 ### Launch the Terminal CLI
 
